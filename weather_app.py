@@ -271,6 +271,110 @@ def get_weather_emoji(icon_code):
     }
     return icon_map.get(icon_code, '🌤️')
 
+def get_weather_background(weather_condition, is_day=True):
+    """Get dynamic background based on weather condition"""
+    if 'clear' in weather_condition.lower():
+        if is_day:
+            return "linear-gradient(135deg, #74b9ff 0%, #0984e3 50%, #fdcb6e 100%)"  # Sunny
+        else:
+            return "linear-gradient(135deg, #2d3436 0%, #636e72 50%, #74b9ff 100%)"  # Clear night
+    elif 'cloud' in weather_condition.lower():
+        return "linear-gradient(135deg, #636e72 0%, #74b9ff 50%, #ddd 100%)"  # Cloudy
+    elif 'rain' in weather_condition.lower() or 'drizzle' in weather_condition.lower():
+        return "linear-gradient(135deg, #2d3436 0%, #636e72 50%, #74b9ff 100%)"  # Rainy
+    elif 'thunder' in weather_condition.lower() or 'storm' in weather_condition.lower():
+        return "linear-gradient(135deg, #2d3436 0%, #636e72 30%, #e17055 100%)"  # Stormy
+    elif 'snow' in weather_condition.lower():
+        return "linear-gradient(135deg, #ddd 0%, #74b9ff 50%, #fff 100%)"  # Snow
+    elif 'mist' in weather_condition.lower() or 'fog' in weather_condition.lower():
+        return "linear-gradient(135deg, #636e72 0%, #ddd 50%, #b2bec3 100%)"  # Misty
+    else:
+        return "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"  # Default
+
+def get_weather_animation(weather_condition):
+    """Get CSS animation based on weather condition"""
+    animations = {
+        'clear': """
+        @keyframes sunshine {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
+        }
+        .weather-animation { animation: sunshine 20s linear infinite; }
+        """,
+        'rain': """
+        @keyframes raindrops {
+            0% { transform: translateY(-100vh) rotate(10deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(10deg); opacity: 0; }
+        }
+        .weather-animation::before {
+            content: '💧';
+            position: absolute;
+            animation: raindrops 1s linear infinite;
+            font-size: 1rem;
+            left: 10%;
+        }
+        .weather-animation::after {
+            content: '💧';
+            position: absolute;
+            animation: raindrops 1.5s linear infinite;
+            font-size: 1rem;
+            left: 80%;
+            animation-delay: 0.5s;
+        }
+        """,
+        'snow': """
+        @keyframes snowfall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        .weather-animation::before {
+            content: '❄️';
+            position: absolute;
+            animation: snowfall 3s linear infinite;
+            font-size: 1rem;
+            left: 20%;
+        }
+        .weather-animation::after {
+            content: '❄️';
+            position: absolute;
+            animation: snowfall 4s linear infinite;
+            font-size: 1rem;
+            left: 70%;
+            animation-delay: 1s;
+        }
+        """,
+        'cloud': """
+        @keyframes float {
+            0%, 100% { transform: translateX(0px) translateY(0px); }
+            33% { transform: translateX(30px) translateY(-10px); }
+            66% { transform: translateX(-20px) translateY(10px); }
+        }
+        .weather-animation { animation: float 6s ease-in-out infinite; }
+        """,
+        'thunder': """
+        @keyframes lightning {
+            0%, 90%, 100% { opacity: 1; }
+            5%, 10% { opacity: 0.2; }
+        }
+        .weather-animation { animation: lightning 2s infinite; }
+        """
+    }
+    
+    for condition, animation in animations.items():
+        if condition in weather_condition.lower():
+            return animation
+    return ""
+
+def get_city_image_url(city_name):
+    """Get city image from Unsplash API"""
+    try:
+        # Using Unsplash Source API for city images
+        # This is a free service that doesn't require API key
+        city_formatted = city_name.replace(' ', '%20')
+        return f"https://source.unsplash.com/800x600/?{city_formatted},city,skyline"
+    except:
+        return None
+
 # Main app
 st.markdown('<h1 class="main-title">🌤️ Weather</h1>', unsafe_allow_html=True)
 
