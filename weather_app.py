@@ -14,7 +14,7 @@ st.set_page_config(
 
 # API configuration
 # Using OpenWeatherMap API (free tier allows 1000 calls/day)
-API_KEY = "http://api.openweathermap.org/data/2.5/forecast?id=524901&appid={API key}"  # Replace with your actual API key
+API_KEY = "http://api.openweathermap.org/data/2.5/forecast?id=524901&appid={ae4e56200025d1e33c424dd11b18fb4a}"  # Replace with your actual API key
 BASE_URL = "http://api.openweathermap.org/data/2.5"
 
 def get_coordinates(city_name):
