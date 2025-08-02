@@ -272,35 +272,38 @@ def get_weather_emoji(icon_code):
     return icon_map.get(icon_code, '🌤️')
 
 # Main app
-st.title("🌤️ 5-Day Weather Forecast")
-st.markdown("Get detailed weather forecasts for any city around the world")
+st.markdown('<h1 class="main-title">🌤️ Weather</h1>', unsafe_allow_html=True)
 
-# Sidebar for input
-with st.sidebar:
-    st.header("🏙️ City Selection")
-    city_input = st.text_input("Enter city name:", placeholder="e.g., London, New York, Tokyo")
-    
-    if st.button("Get Forecast", type="primary"):
-        if city_input:
-            with st.spinner("Fetching weather data..."):
-                lat, lon, city_name = get_coordinates(city_input)
-                
-                if lat and lon:
-                    current_weather = get_current_weather(lat, lon)
-                    weather_forecast = get_weather_forecast(lat, lon)
-                    
-                    if current_weather and weather_forecast:
-                        st.session_state['current_weather'] = current_weather
-                        st.session_state['weather_forecast'] = weather_forecast
-                        st.session_state['city_name'] = city_name
-                        st.success(f"Weather data loaded for {city_name}")
-                    else:
-                        st.error("Failed to fetch weather data")
-                else:
-                    st.error("City not found. Please check the spelling and try again.")
-    
-    st.markdown("---")
-    st.markdown("**Note:** You need an OpenWeatherMap API key to use this app. Get one free at [openweathermap.org](https://openweathermap.org/api) and add it to your .env file")
+# Search container
+st.markdown('<div class="search-container">', unsafe_allow_html=True)
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    city_input = st.text_input("", placeholder="Search for a city...", label_visibility="collapsed")
+
+with col2:
+    search_button = st.button("🔍", help="Get weather")
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Handle search
+if search_button and city_input:
+    with st.spinner("🌍 Getting weather data..."):
+        lat, lon, city_name = get_coordinates(city_input)
+        
+        if lat and lon:
+            current_weather = get_current_weather(lat, lon)
+            weather_forecast = get_weather_forecast(lat, lon)
+            
+            if current_weather and weather_forecast:
+                st.session_state['current_weather'] = current_weather
+                st.session_state['weather_forecast'] = weather_forecast
+                st.session_state['city_name'] = city_name
+                st.rerun()
+            else:
+                st.error("❌ Failed to fetch weather data")
+        else:
+            st.error("❌ City not found. Try again with a different spelling.")
 
 # Main content area
 if 'current_weather' in st.session_state and 'weather_forecast' in st.session_state:
@@ -308,127 +311,93 @@ if 'current_weather' in st.session_state and 'weather_forecast' in st.session_st
     weather_forecast = st.session_state['weather_forecast']
     city_name = st.session_state['city_name']
     
-    # Current weather
-    st.subheader(f"Current Weather in {city_name}")
+    # Current weather - Main card
+    st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
+    # City and current temperature
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.markdown(f'<div class="city-name">📍 {city_name}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="current-temp">{current_weather["main"]["temp"]:.0f}°</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="weather-desc">{current_weather["weather"][0]["description"].title()} {get_weather_emoji(current_weather["weather"][0]["icon"])}</div>', unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f"""
+        <div class="weather-card">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem;">{get_weather_emoji(current_weather['weather'][0]['icon'])}</div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">Feels like {current_weather['main']['feels_like']:.0f}°</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Key metrics in a clean row
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric(
-            "Temperature",
-            f"{current_weather['main']['temp']:.1f}°C",
-            f"Feels like {current_weather['main']['feels_like']:.1f}°C"
-        )
+        st.markdown(f"""
+        <div class="metric-container">
+            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">💧</div>
+            <div style="font-size: 1.2rem; font-weight: 500;">{current_weather['main']['humidity']}%</div>
+            <div style="font-size: 0.8rem; opacity: 0.7;">Humidity</div>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col2:
-        st.metric("Humidity", f"{current_weather['main']['humidity']}%")
+        st.markdown(f"""
+        <div class="metric-container">
+            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">💨</div>
+            <div style="font-size: 1.2rem; font-weight: 500;">{current_weather['wind']['speed']:.1f}</div>
+            <div style="font-size: 0.8rem; opacity: 0.7;">Wind m/s</div>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col3:
-        st.metric("Wind Speed", f"{current_weather['wind']['speed']} m/s")
+        st.markdown(f"""
+        <div class="metric-container">
+            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">🌡️</div>
+            <div style="font-size: 1.2rem; font-weight: 500;">{current_weather['main']['pressure']}</div>
+            <div style="font-size: 0.8rem; opacity: 0.7;">Pressure</div>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col4:
-        st.metric("Pressure", f"{current_weather['main']['pressure']} hPa")
+        visibility = current_weather.get('visibility', 0) / 1000 if current_weather.get('visibility') else 0
+        st.markdown(f"""
+        <div class="metric-container">
+            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">👁️</div>
+            <div style="font-size: 1.2rem; font-weight: 500;">{visibility:.1f}</div>
+            <div style="font-size: 0.8rem; opacity: 0.7;">Visibility km</div>
+        </div>
+        """, unsafe_allow_html=True)
     
-    st.markdown(f"**Conditions:** {current_weather['weather'][0]['description'].title()} {get_weather_emoji(current_weather['weather'][0]['icon'])}")
-    
-    # 5-day forecast
-    st.subheader("📅 5-Day Forecast")
+    # 5-day forecast - Minimal horizontal scroll
+    st.markdown('<div style="margin-top: 2rem; color: white;"><h3 style="color: white; font-weight: 300;">5-Day Forecast</h3></div>', unsafe_allow_html=True)
     
     df = format_weather_data(weather_forecast)
     
-    if df is not None:
-        # Display forecast cards
-        for i in range(0, len(df), 3):
-            cols = st.columns(3)
-            for j, col in enumerate(cols):
-                if i + j < len(df):
-                    row = df.iloc[i + j]
-                    with col:
-                        emoji = get_weather_emoji(row['Icon'])
-                        st.markdown(f"""
-                        <div style="
-                            border: 1px solid #ddd;
-                            border-radius: 10px;
-                            padding: 15px;
-                            margin: 5px;
-                            text-align: center;
-                            background-color: #f9f9f9;
-                        ">
-                            <h4>{row['Day']}</h4>
-                            <p style="font-size: 14px; color: #666;">{row['Date']}</p>
-                            <div style="font-size: 30px;">{emoji}</div>
-                            <p><strong>{row['Temperature (°C)']}°C</strong></p>
-                            <p>{row['Description']}</p>
-                            <p>💧 {row['Humidity (%)']}% | 💨 {row['Wind Speed (m/s)']} m/s</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-        
-        # Temperature chart
-        st.subheader("📊 Temperature Trend")
-        
-        fig = go.Figure()
-        
-        fig.add_trace(go.Scatter(
-            x=df['Date'],
-            y=df['Max Temp'],
-            mode='lines+markers',
-            name='Max Temperature',
-            line=dict(color='red', width=3),
-            marker=dict(size=8)
-        ))
-        
-        fig.add_trace(go.Scatter(
-            x=df['Date'],
-            y=df['Min Temp'],
-            mode='lines+markers',
-            name='Min Temperature',
-            line=dict(color='blue', width=3),
-            marker=dict(size=8)
-        ))
-        
-        fig.update_layout(
-            title="5-Day Temperature Forecast",
-            xaxis_title="Date",
-            yaxis_title="Temperature (°C)",
-            hovermode='x unified',
-            showlegend=True,
-            height=400
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Data table
-        with st.expander("📋 Detailed Forecast Data"):
-            display_df = df[['Date', 'Day', 'Temperature (°C)', 'Description', 'Humidity (%)', 'Wind Speed (m/s)']]
-            st.dataframe(display_df, use_container_width=True)
+    if df is not None and len(df) > 0:
+        cols = st.columns(min(5, len(df)))
+        for i, col in enumerate(cols):
+            if i < len(df):
+                row = df.iloc[i]
+                with col:
+                    day_name = row['Day'][:3]  # Abbreviated day name
+                    st.markdown(f"""
+                    <div class="forecast-item">
+                        <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.5rem;">{day_name}</div>
+                        <div style="font-size: 2rem; margin: 0.5rem 0;">{get_weather_emoji(row['Icon'])}</div>
+                        <div style="font-size: 1rem; font-weight: 500;">{row['Max Temp']:.0f}°</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7;">{row['Min Temp']:.0f}°</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
 else:
-    # Welcome message
-    st.info("👆 Enter a city name in the sidebar to get started!")
-    
+    # Welcome message - Minimal and clean
     st.markdown("""
-    ### Features:
-    - 🌍 **Global Coverage**: Get weather forecasts for cities worldwide
-    - 📊 **Visual Charts**: Temperature trends with interactive graphs
-    - 📱 **Responsive Design**: Works on desktop and mobile devices
-    - 🎯 **Accurate Data**: Powered by OpenWeatherMap API
-    
-    ### How to use:
-    1. Enter a city name in the sidebar
-    2. Click "Get Forecast" 
-    3. View current conditions and 5-day forecast
-    4. Explore temperature trends in the chart
-    
-    ### Setup Instructions:
-    1. Get a free API key from [OpenWeatherMap](https://openweathermap.org/api)
-    2. Create a `.env` file in the project folder and add: `OPENWEATHER_API_KEY=your_api_key_here`
-    3. Install required packages: `pip install -r requirements.txt`
-    4. Run the app: `streamlit run weather_app.py`
-    """)
-
-# Footer
-st.markdown("---")
-st.markdown(
-    "Built with ❤️ using Streamlit | Weather data provided by OpenWeatherMap",
-    help="This app uses the OpenWeatherMap API to fetch real-time weather data"
-)
+    <div class="main-container" style="text-align: center; color: white;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🌤️</div>
+        <h2 style="color: white; font-weight: 300; margin-bottom: 1rem;">Weather App</h2>
+        <p style="color: rgba(255,255,255,0.8); font-size: 1.1rem;">Search for any city to get current weather and 5-day forecast</p>
+    </div>
+    """, unsafe_allow_html=True)
