@@ -23,6 +23,8 @@ st.markdown("""
 <style>
     .stApp {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+        overflow: hidden;
     }
     
     .main-container {
@@ -33,6 +35,38 @@ st.markdown("""
         margin: 1rem 0;
         border: 1px solid rgba(255, 255, 255, 0.2);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .city-image-container {
+        position: relative;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .city-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 15px;
+        opacity: 0.8;
+    }
+    
+    .city-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, rgba(0,0,0,0.3), rgba(0,0,0,0.1));
+        display: flex;
+        align-items: flex-end;
+        padding: 1rem;
+        border-radius: 15px;
     }
     
     .weather-card {
@@ -44,6 +78,8 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.2);
         text-align: center;
         color: white;
+        position: relative;
+        overflow: hidden;
     }
     
     .current-temp {
@@ -52,18 +88,21 @@ st.markdown("""
         color: white;
         margin: 0;
         line-height: 1;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
     
     .city-name {
         font-size: 1.5rem;
         color: rgba(255, 255, 255, 0.9);
         margin-bottom: 0.5rem;
+        text-shadow: 0 1px 5px rgba(0,0,0,0.5);
     }
     
     .weather-desc {
         font-size: 1.1rem;
         color: rgba(255, 255, 255, 0.8);
         margin-bottom: 1rem;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
     
     .forecast-item {
@@ -74,6 +113,15 @@ st.markdown("""
         text-align: center;
         color: white;
         border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .forecast-item:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     }
     
     .metric-container {
@@ -83,6 +131,13 @@ st.markdown("""
         margin: 0.5rem;
         text-align: center;
         color: white;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .metric-container:hover {
+        transform: scale(1.05);
+        background: rgba(255, 255, 255, 0.2);
     }
     
     .search-container {
@@ -90,6 +145,7 @@ st.markdown("""
         border-radius: 25px;
         padding: 1rem;
         margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
     }
     
     .stTextInput > div > div > input {
@@ -99,6 +155,7 @@ st.markdown("""
         padding: 0.75rem 1rem;
         color: #333;
         font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     
     .stButton > button {
@@ -109,11 +166,45 @@ st.markdown("""
         padding: 0.75rem 2rem;
         font-weight: 500;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Weather particles */
+    .weather-particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: hidden;
+    }
+    
+    /* Floating weather icons */
+    .floating-icon {
+        position: absolute;
+        font-size: 2rem;
+        opacity: 0.1;
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    
+    .weather-icon-large {
+        animation: pulse 3s ease-in-out infinite;
     }
     
     /* Hide default streamlit elements */
@@ -131,6 +222,13 @@ st.markdown("""
         margin-bottom: 2rem;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
+    
+    /* Temperature gradient based on value */
+    .temp-hot { color: #ff6b6b; }
+    .temp-warm { color: #feca57; }
+    .temp-cool { color: #48dbfb; }
+    .temp-cold { color: #0abde3; }
+    .temp-freezing { color: #006ba6; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -415,68 +513,147 @@ if 'current_weather' in st.session_state and 'weather_forecast' in st.session_st
     weather_forecast = st.session_state['weather_forecast']
     city_name = st.session_state['city_name']
     
-    # Current weather - Main card
-    st.markdown('<div class="main-container">', unsafe_allow_html=True)
+    # Get weather-based styling
+    weather_condition = current_weather['weather'][0]['description']
+    icon_code = current_weather['weather'][0]['icon']
+    is_day = 'd' in icon_code
+    temp = current_weather['main']['temp']
     
-    # City and current temperature
+    # Dynamic background based on weather
+    dynamic_bg = get_weather_background(weather_condition, is_day)
+    weather_animation = get_weather_animation(weather_condition)
+    
+    # Temperature color coding
+    if temp >= 30:
+        temp_class = "temp-hot"
+    elif temp >= 20:
+        temp_class = "temp-warm"
+    elif temp >= 10:
+        temp_class = "temp-cool"
+    elif temp >= 0:
+        temp_class = "temp-cold"
+    else:
+        temp_class = "temp-freezing"
+    
+    # Add dynamic styles
+    st.markdown(f"""
+    <style>
+        .stApp {{
+            background: {dynamic_bg} !important;
+        }}
+        {weather_animation}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # City image
+    city_image_url = get_city_image_url(city_name)
+    
+    # Current weather - Main card with city image
+    st.markdown('<div class="main-container weather-animation">', unsafe_allow_html=True)
+    
+    # City image header
+    if city_image_url:
+        st.markdown(f"""
+        <div class="city-image-container">
+            <img src="{city_image_url}" class="city-image" alt="{city_name}">
+            <div class="city-overlay">
+                <div>
+                    <div class="city-name">📍 {city_name}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">Live Weather Data</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Weather particles background
+    st.markdown(f"""
+    <div class="weather-particles">
+        <div class="floating-icon" style="left: 10%; animation-delay: 0s;">{get_weather_emoji(icon_code)}</div>
+        <div class="floating-icon" style="left: 80%; animation-delay: 2s;">{get_weather_emoji(icon_code)}</div>
+        <div class="floating-icon" style="left: 60%; animation-delay: 4s;">{get_weather_emoji(icon_code)}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Temperature and weather info
     col1, col2 = st.columns([2, 1])
     with col1:
-        st.markdown(f'<div class="city-name">📍 {city_name}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="current-temp">{current_weather["main"]["temp"]:.0f}°</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="weather-desc">{current_weather["weather"][0]["description"].title()} {get_weather_emoji(current_weather["weather"][0]["icon"])}</div>', unsafe_allow_html=True)
+        if not city_image_url:
+            st.markdown(f'<div class="city-name">📍 {city_name}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="current-temp {temp_class}">{temp:.0f}°C</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="weather-desc">{weather_condition.title()} {get_weather_emoji(icon_code)}</div>', unsafe_allow_html=True)
+        
+        # Additional weather info
+        sunrise = datetime.fromtimestamp(current_weather['sys']['sunrise']).strftime('%H:%M')
+        sunset = datetime.fromtimestamp(current_weather['sys']['sunset']).strftime('%H:%M')
+        st.markdown(f"""
+        <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-top: 1rem;">
+            🌅 Sunrise: {sunrise} | 🌇 Sunset: {sunset}
+        </div>
+        """, unsafe_allow_html=True)
     
     with col2:
         st.markdown(f"""
         <div class="weather-card">
-            <div style="font-size: 3rem; margin-bottom: 0.5rem;">{get_weather_emoji(current_weather['weather'][0]['icon'])}</div>
-            <div style="font-size: 0.9rem; opacity: 0.8;">Feels like {current_weather['main']['feels_like']:.0f}°</div>
+            <div class="weather-icon-large" style="font-size: 3rem; margin-bottom: 0.5rem;">{get_weather_emoji(icon_code)}</div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">Feels like {current_weather['main']['feels_like']:.0f}°C</div>
+            <div style="font-size: 0.8rem; opacity: 0.6; margin-top: 0.5rem;">UV Index: {current_weather.get('uvi', 'N/A')}</div>
         </div>
         """, unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Key metrics in a clean row
+    # Enhanced metrics with weather-specific data
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
+        humidity_icon = "💧" if current_weather['main']['humidity'] > 70 else "🌵" if current_weather['main']['humidity'] < 30 else "💧"
         st.markdown(f"""
         <div class="metric-container">
-            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">💧</div>
+            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">{humidity_icon}</div>
             <div style="font-size: 1.2rem; font-weight: 500;">{current_weather['main']['humidity']}%</div>
             <div style="font-size: 0.8rem; opacity: 0.7;">Humidity</div>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
+        wind_speed = current_weather['wind']['speed']
+        wind_icon = "🌪️" if wind_speed > 10 else "💨" if wind_speed > 5 else "🍃"
+        wind_direction = current_weather['wind'].get('deg', 0)
+        directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        wind_dir = directions[int((wind_direction + 22.5) // 45) % 8]
+        
         st.markdown(f"""
         <div class="metric-container">
-            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">💨</div>
-            <div style="font-size: 1.2rem; font-weight: 500;">{current_weather['wind']['speed']:.1f}</div>
-            <div style="font-size: 0.8rem; opacity: 0.7;">Wind m/s</div>
+            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">{wind_icon}</div>
+            <div style="font-size: 1.2rem; font-weight: 500;">{wind_speed:.1f} m/s</div>
+            <div style="font-size: 0.8rem; opacity: 0.7;">Wind {wind_dir}</div>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
+        pressure = current_weather['main']['pressure']
+        pressure_icon = "📈" if pressure > 1020 else "📉" if pressure < 1000 else "🌡️"
         st.markdown(f"""
         <div class="metric-container">
-            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">🌡️</div>
-            <div style="font-size: 1.2rem; font-weight: 500;">{current_weather['main']['pressure']}</div>
-            <div style="font-size: 0.8rem; opacity: 0.7;">Pressure</div>
+            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">{pressure_icon}</div>
+            <div style="font-size: 1.2rem; font-weight: 500;">{pressure}</div>
+            <div style="font-size: 0.8rem; opacity: 0.7;">Pressure hPa</div>
         </div>
         """, unsafe_allow_html=True)
     
     with col4:
         visibility = current_weather.get('visibility', 0) / 1000 if current_weather.get('visibility') else 0
+        vis_icon = "👁️‍🗨️" if visibility > 10 else "🌫️" if visibility < 5 else "👁️"
         st.markdown(f"""
         <div class="metric-container">
-            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">👁️</div>
+            <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">{vis_icon}</div>
             <div style="font-size: 1.2rem; font-weight: 500;">{visibility:.1f}</div>
             <div style="font-size: 0.8rem; opacity: 0.7;">Visibility km</div>
         </div>
         """, unsafe_allow_html=True)
     
-    # 5-day forecast - Minimal horizontal scroll
-    st.markdown('<div style="margin-top: 2rem; color: white;"><h3 style="color: white; font-weight: 300;">5-Day Forecast</h3></div>', unsafe_allow_html=True)
+    # Enhanced 5-day forecast with animations
+    st.markdown('<div style="margin-top: 2rem; color: white;"><h3 style="color: white; font-weight: 300;">📅 5-Day Forecast</h3></div>', unsafe_allow_html=True)
     
     df = format_weather_data(weather_forecast)
     
@@ -486,13 +663,27 @@ if 'current_weather' in st.session_state and 'weather_forecast' in st.session_st
             if i < len(df):
                 row = df.iloc[i]
                 with col:
-                    day_name = row['Day'][:3]  # Abbreviated day name
+                    day_name = row['Day'][:3]
+                    max_temp = row['Max Temp']
+                    min_temp = row['Min Temp']
+                    
+                    # Temperature color for forecast
+                    if max_temp >= 30:
+                        forecast_temp_class = "temp-hot"
+                    elif max_temp >= 20:
+                        forecast_temp_class = "temp-warm"
+                    elif max_temp >= 10:
+                        forecast_temp_class = "temp-cool"
+                    else:
+                        forecast_temp_class = "temp-cold"
+                    
                     st.markdown(f"""
                     <div class="forecast-item">
                         <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.5rem;">{day_name}</div>
                         <div style="font-size: 2rem; margin: 0.5rem 0;">{get_weather_emoji(row['Icon'])}</div>
-                        <div style="font-size: 1rem; font-weight: 500;">{row['Max Temp']:.0f}°</div>
-                        <div style="font-size: 0.8rem; opacity: 0.7;">{row['Min Temp']:.0f}°</div>
+                        <div style="font-size: 1rem; font-weight: 500;" class="{forecast_temp_class}">{max_temp:.0f}°</div>
+                        <div style="font-size: 0.8rem; opacity: 0.7;">{min_temp:.0f}°</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.3rem;">{row['Description']}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
