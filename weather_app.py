@@ -481,7 +481,7 @@ st.markdown('<div class="search-container">', unsafe_allow_html=True)
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    city_input = st.text_input("", placeholder="Search for a city...", label_visibility="collapsed")
+    city_input = st.text_input("Search for a city", placeholder="Search for a city...", label_visibility="collapsed")
 
 with col2:
     search_button = st.button("🔍", help="Get weather")
@@ -489,23 +489,25 @@ with col2:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Handle search
-if search_button and city_input:
-    with st.spinner("🌍 Getting weather data..."):
-        lat, lon, city_name = get_coordinates(city_input)
-        
-        if lat and lon:
-            current_weather = get_current_weather(lat, lon)
-            weather_forecast = get_weather_forecast(lat, lon)
+if (search_button and city_input) or (city_input and city_input != st.session_state.get('last_search', '')):
+    if city_input:
+        with st.spinner("🌍 Getting weather data..."):
+            lat, lon, city_name = get_coordinates(city_input)
             
-            if current_weather and weather_forecast:
-                st.session_state['current_weather'] = current_weather
-                st.session_state['weather_forecast'] = weather_forecast
-                st.session_state['city_name'] = city_name
-                st.rerun()
+            if lat and lon:
+                current_weather = get_current_weather(lat, lon)
+                weather_forecast = get_weather_forecast(lat, lon)
+                
+                if current_weather and weather_forecast:
+                    st.session_state['current_weather'] = current_weather
+                    st.session_state['weather_forecast'] = weather_forecast
+                    st.session_state['city_name'] = city_name
+                    st.session_state['last_search'] = city_input
+                    st.rerun()
+                else:
+                    st.error("❌ Failed to fetch weather data")
             else:
-                st.error("❌ Failed to fetch weather data")
-        else:
-            st.error("❌ City not found. Try again with a different spelling.")
+                st.error("❌ City not found. Try again with a different spelling.")
 
 # Main content area
 if 'current_weather' in st.session_state and 'weather_forecast' in st.session_state:
