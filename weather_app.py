@@ -489,25 +489,23 @@ with col2:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Handle search
-if (search_button and city_input) or (city_input and city_input != st.session_state.get('last_search', '')):
-    if city_input:
-        with st.spinner("🌍 Getting weather data..."):
-            lat, lon, city_name = get_coordinates(city_input)
+if search_button and city_input:
+    with st.spinner("🌍 Getting weather data..."):
+        lat, lon, city_name = get_coordinates(city_input)
+        
+        if lat and lon:
+            current_weather = get_current_weather(lat, lon)
+            weather_forecast = get_weather_forecast(lat, lon)
             
-            if lat and lon:
-                current_weather = get_current_weather(lat, lon)
-                weather_forecast = get_weather_forecast(lat, lon)
-                
-                if current_weather and weather_forecast:
-                    st.session_state['current_weather'] = current_weather
-                    st.session_state['weather_forecast'] = weather_forecast
-                    st.session_state['city_name'] = city_name
-                    st.session_state['last_search'] = city_input
-                    st.rerun()
-                else:
-                    st.error("❌ Failed to fetch weather data")
+            if current_weather and weather_forecast:
+                st.session_state['current_weather'] = current_weather
+                st.session_state['weather_forecast'] = weather_forecast
+                st.session_state['city_name'] = city_name
+                st.success(f"✅ Weather data loaded for {city_name}")
             else:
-                st.error("❌ City not found. Try again with a different spelling.")
+                st.error("❌ Failed to fetch weather data")
+        else:
+            st.error("❌ City not found. Try again with a different spelling.")
 
 # Main content area
 if 'current_weather' in st.session_state and 'weather_forecast' in st.session_state:
