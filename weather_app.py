@@ -12,7 +12,7 @@ API_KEY = os.getenv('OPENWEATHER_API_KEY')
 
 # Set page configuration
 st.set_page_config(
-    page_title="Weather",
+    page_title="Weather App - Live Weather Forecast",
     page_icon="🌤️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -22,7 +22,16 @@ st.set_page_config(
 st.markdown("""
 <style>
     .stApp {
-        background: linear-gradient(135deg, #4A90E2 0%, #5BA3F5 50%, #87CEEB 100%);
+        background: linear-gradelse:
+    # Welcome screen
+    st.markdown("""
+    <div class="main-container" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🌤️</div>
+        <h2 style="color: white; font-weight: 300; margin-bottom: 1rem;">Weather App</h2>
+        <p style="color: rgba(255,255,255,0.8); font-size: 1.1rem;">Search for any city to get detailed weather information with live forecasts</p>
+        <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Click "📍 My Location" for automatic location detection</p>
+    </div>
+    """, unsafe_allow_html=True)eg, #4A90E2 0%, #5BA3F5 50%, #87CEEB 100%);
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
         padding: 0;
     }
@@ -465,169 +474,72 @@ if (city and search_btn) or use_auto_location:
             st.markdown('<div class="main-container">', unsafe_allow_html=True)
             
             # Header section with city and main temperature
-            st.markdown(f"""
-            <div class="header-section">
-                <div class="city-info">
-                    <h1>{current_data["name"]}</h1>
-                    <div class="condition">{current_data["weather"][0]["description"].title()}</div>
-                    <div class="temp-range">H:{current_data["main"]["temp_max"]:.0f}° L:{current_data["main"]["temp_min"]:.0f}°</div>
-                    <div class="day-info">{datetime.now().strftime("%A")} Today</div>
-                </div>
-                <div class="main-temp">{current_data["main"]["temp"]:.0f}°</div>
-            </div>
-            """, unsafe_allow_html=True)
+            col1, col2 = st.columns([2, 1])
             
-            # Hourly forecast
+            with col1:
+                st.markdown(f"<h1 style='color: white; font-size: 3rem; font-weight: 300; margin: 0;'>{current_data['name']}</h1>", unsafe_allow_html=True)
+                st.markdown(f"<div style='color: rgba(255,255,255,0.8); font-size: 1.2rem; margin: 0.5rem 0;'>{current_data['weather'][0]['description'].title()}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='color: rgba(255,255,255,0.7); font-size: 1rem;'>H:{current_data['main']['temp_max']:.0f}° L:{current_data['main']['temp_min']:.0f}°</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='color: rgba(255,255,255,0.7); font-size: 1rem; margin-top: 1rem;'>{datetime.now().strftime('%A')} Today</div>", unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown(f"<div style='color: white; font-size: 6rem; font-weight: 200; margin: 0; line-height: 1; text-align: right;'>{current_data['main']['temp']:.0f}°</div>", unsafe_allow_html=True)
+            
+            # Hourly forecast using Streamlit columns
             if forecast_data:
-                st.markdown('<div class="hourly-forecast">', unsafe_allow_html=True)
+                st.markdown("<h4 style='color: white; margin: 2rem 0 1rem 0;'>📅 Hourly Forecast</h4>", unsafe_allow_html=True)
                 
-                # Create hourly grid
-                hourly_html = '<div class="hourly-grid">'
-                
-                for i in range(11):  # Show 11 hours like in the design
+                cols = st.columns(8)
+                for i, col in enumerate(cols):
                     if i < len(forecast_data['list']):
                         item = forecast_data['list'][i]
                         time = datetime.fromtimestamp(item['dt'])
                         
-                        if i == 0:
-                            time_str = "Now"
-                        elif i == 3:  # Sunset indicator
-                            time_str = "Sunset"
-                            temp_str = "Sunset"
-                            icon = "🌅"
-                        else:
-                            time_str = time.strftime("%-I%p")
-                            temp_str = f"{item['main']['temp']:.0f}°"
+                        with col:
+                            if i == 0:
+                                time_str = "Now"
+                            else:
+                                hour = time.hour
+                                if hour == 0:
+                                    time_str = "12AM"
+                                elif hour < 12:
+                                    time_str = f"{hour}AM"
+                                elif hour == 12:
+                                    time_str = "12PM"
+                                else:
+                                    time_str = f"{hour-12}PM"
+                            
                             icon = get_weather_icon(item['weather'][0]['main'])
-                        
-                        if i != 3:  # Regular hourly items
-                            temp_str = f"{item['main']['temp']:.0f}°"
-                            icon = get_weather_icon(item['weather'][0]['main'])
-                        
-                        hourly_html += f"""
-                        <div class="hourly-item">
-                            <div class="hourly-time">{time_str}</div>
-                            <div class="hourly-icon">{icon}</div>
-                            <div class="hourly-temp">{temp_str}</div>
-                        </div>
-                        """
-                
-                hourly_html += '</div>'
-                st.markdown(hourly_html, unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
+                            temp = f"{item['main']['temp']:.0f}°"
+                            
+                            st.markdown(f"""
+                            <div style='text-align: center; color: white; padding: 0.5rem; background: rgba(255,255,255,0.1); border-radius: 10px; margin: 0.2rem;'>
+                                <div style='font-size: 0.8rem; margin-bottom: 0.3rem; color: rgba(255,255,255,0.7);'>{time_str}</div>
+                                <div style='font-size: 1.5rem; margin: 0.3rem 0;'>{icon}</div>
+                                <div style='font-size: 0.9rem;'>{temp}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
             
-            # Forecast and details section
-            st.markdown('<div class="forecast-section">', unsafe_allow_html=True)
+            # Weather details using Streamlit metrics
+            st.markdown("<h4 style='color: white; margin: 2rem 0 1rem 0;'>🌤️ Weather Details</h4>", unsafe_allow_html=True)
             
-            # Weekly forecast
-            if forecast_data:
-                st.markdown('<div class="weekly-forecast">', unsafe_allow_html=True)
-                
-                # Group forecast by day
-                daily_forecasts = {}
-                for item in forecast_data['list']:
-                    date = datetime.fromtimestamp(item['dt']).date()
-                    if date not in daily_forecasts:
-                        daily_forecasts[date] = {
-                            'temps': [],
-                            'condition': item['weather'][0]['main'],
-                            'icon': get_weather_icon(item['weather'][0]['main'])
-                        }
-                    daily_forecasts[date]['temps'].append(item['main']['temp'])
-                
-                days = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-                for i, (date, data) in enumerate(list(daily_forecasts.items())[:5]):
-                    day_name = days[i] if i < len(days) else date.strftime("%A")
-                    min_temp = min(data['temps'])
-                    max_temp = max(data['temps'])
-                    
-                    st.markdown(f"""
-                    <div class="forecast-day">
-                        <div class="day-name">
-                            <span>{day_name}</span>
-                            <span style="margin-left: 1rem;">{data['icon']}</span>
-                        </div>
-                        <div>{max_temp:.0f} {min_temp:.0f}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                st.markdown('</div>', unsafe_allow_html=True)
+            col1, col2, col3 = st.columns(3)
             
-            # Weather details
-            st.markdown('<div class="weather-details-grid">', unsafe_allow_html=True)
+            with col1:
+                st.metric("💧 Humidity", f"{current_data['main']['humidity']}%")
+                st.metric("🌬️ Wind Speed", f"{current_data['wind']['speed']} m/s")
             
-            # Sunrise and sunset
-            sunrise = datetime.fromtimestamp(current_data['sys']['sunrise']).strftime("%-I:%M %p")
-            sunset = datetime.fromtimestamp(current_data['sys']['sunset']).strftime("%-I:%M %p")
+            with col2:
+                st.metric("🌡️ Feels Like", f"{current_data['main']['feels_like']:.0f}°C")
+                st.metric("📊 Pressure", f"{current_data['main']['pressure']} hPa")
             
-            details = [
-                ("Sunrise", sunrise),
-                ("Sunset", sunset),
-                ("Chance of Rain", "0%"),
-                ("Humidity", f"{current_data['main']['humidity']}%"),
-                ("Wind", f"wsw {current_data['wind']['speed']:.0f} mph")
-            ]
-            
-            for label, value in details:
-                st.markdown(f"""
-                <div class="detail-item">
-                    <span>{label}:</span>
-                    <span>{value}</span>
-                </div>
-                """, unsafe_allow_html=True)
+            with col3:
+                sunrise = datetime.fromtimestamp(current_data['sys']['sunrise']).strftime("%-I:%M %p")
+                sunset = datetime.fromtimestamp(current_data['sys']['sunset']).strftime("%-I:%M %p")
+                st.metric("🌅 Sunrise", sunrise)
+                st.metric("🌇 Sunset", sunset)
             
             st.markdown('</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)  # End forecast-section
-            
-            # Bottom widgets section
-            st.markdown('<div class="bottom-widgets">', unsafe_allow_html=True)
-            
-            # Air Quality widget
-            st.markdown(f"""
-            <div class="widget">
-                <div class="widget-title">Air Quality</div>
-                <div style="font-size: 2rem; margin: 1rem 0;">67</div>
-                <div style="font-size: 1rem; margin-bottom: 1rem;">Moderate</div>
-                <div class="air-quality-bar">
-                    <div class="quality-indicator" style="left: 40%;"></div>
-                </div>
-                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Air quality for Chicago.<br>More data from The Weather Channel.</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # UV Index widget
-            st.markdown(f"""
-            <div class="widget">
-                <div class="widget-title">UV Index</div>
-                <div class="uv-meter">
-                    <div class="uv-inner">4.0</div>
-                </div>
-                <div style="font-size: 1rem;">Moderate</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Temperature circular widget
-            st.markdown(f"""
-            <div class="widget">
-                <div class="circular-widget">
-                    <div style="font-size: 1.5rem; font-weight: bold;">{current_data["main"]["temp"]:.0f}°C</div>
-                    <div style="font-size: 0.8rem; opacity: 0.7;">Temperature</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Feels like circular widget  
-            st.markdown(f"""
-            <div class="widget">
-                <div class="circular-widget">
-                    <div style="font-size: 1.5rem; font-weight: bold;">{current_data["main"]["feels_like"]:.0f}°</div>
-                    <div style="font-size: 0.8rem; opacity: 0.7;">Feels Like</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True)  # End bottom-widgets
-            st.markdown('</div>', unsafe_allow_html=True)  # End main-container
             
         except requests.exceptions.RequestException:
             st.error("❌ City not found or API error. Please check the city name and try again.")
