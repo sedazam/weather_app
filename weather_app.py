@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import pandas as pd
+import json
 
 # Load API key from environment
 load_dotenv()
@@ -17,99 +18,230 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for modern weather app design
+# Custom CSS for iPad-style weather app design
 st.markdown("""
 <style>
     .stApp {
         background: linear-gradient(135deg, #4A90E2 0%, #5BA3F5 50%, #87CEEB 100%);
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        padding: 0;
     }
     
-    .main-weather-container {
+    .main-container {
         background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(20px);
         border-radius: 20px;
         padding: 2rem;
-        margin: 1rem 0;
+        margin: 1rem;
         border: 1px solid rgba(255, 255, 255, 0.2);
         color: white;
+        max-width: 1200px;
     }
     
-    .city-title {
-        font-size: 2.5rem;
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+    }
+    
+    .city-info h1 {
+        font-size: 3rem;
         font-weight: 300;
+        margin: 0;
         color: white;
-        margin-bottom: 0.2rem;
     }
     
-    .weather-condition {
+    .city-info .condition {
         font-size: 1.2rem;
         color: rgba(255, 255, 255, 0.8);
-        margin-bottom: 0.5rem;
+        margin: 0.5rem 0;
     }
     
-    .temp-range {
+    .city-info .temp-range {
         font-size: 1rem;
         color: rgba(255, 255, 255, 0.7);
         margin-bottom: 1rem;
     }
     
-    .current-temp {
-        font-size: 5rem;
+    .city-info .day-info {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .main-temp {
+        font-size: 6rem;
         font-weight: 200;
         color: white;
         margin: 0;
         line-height: 1;
+        text-align: right;
     }
     
-    .hourly-container {
+    .hourly-forecast {
         background: rgba(255, 255, 255, 0.1);
         border-radius: 15px;
-        padding: 1rem;
-        margin: 1rem 0;
+        padding: 1.5rem;
+        margin: 2rem 0;
         backdrop-filter: blur(10px);
     }
     
-    .hourly-item {
+    .hourly-grid {
+        display: grid;
+        grid-template-columns: repeat(11, 1fr);
+        gap: 1rem;
         text-align: center;
-        color: white;
-        padding: 0.5rem;
-        margin: 0 0.2rem;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.1);
-        min-width: 80px;
     }
     
-    .forecast-container {
+    .hourly-item {
+        color: white;
+        padding: 0.5rem;
+    }
+    
+    .hourly-time {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 0.5rem;
+    }
+    
+    .hourly-icon {
+        font-size: 1.8rem;
+        margin: 0.5rem 0;
+    }
+    
+    .hourly-temp {
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
+    .forecast-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+    
+    .weekly-forecast {
         background: rgba(255, 255, 255, 0.1);
         border-radius: 15px;
-        padding: 1rem;
-        margin: 1rem 0;
+        padding: 1.5rem;
         backdrop-filter: blur(10px);
     }
     
     .forecast-day {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 2fr 1fr 2fr;
         align-items: center;
-        padding: 0.5rem 0;
-        color: white;
+        padding: 0.8rem 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
     }
     
-    .weather-details {
+    .forecast-day:last-child {
+        border-bottom: none;
+    }
+    
+    .day-name {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .weather-details-grid {
         background: rgba(255, 255, 255, 0.1);
         border-radius: 15px;
-        padding: 1rem;
-        margin: 1rem 0;
+        padding: 1.5rem;
         backdrop-filter: blur(10px);
-        color: white;
     }
     
     .detail-item {
         display: flex;
         justify-content: space-between;
-        padding: 0.3rem 0;
+        padding: 0.5rem 0;
+        color: white;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+    
+    .bottom-widgets {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .widget {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        color: white;
+    }
+    
+    .widget-title {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .air-quality-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #4CAF50 0%, #FFEB3B 25%, #FF9800 50%, #F44336 75%, #9C27B0 100%);
+        margin: 1rem 0;
+        position: relative;
+    }
+    
+    .quality-indicator {
+        width: 12px;
+        height: 12px;
+        background: white;
+        border-radius: 50%;
+        position: absolute;
+        top: -2px;
+    }
+    
+    .uv-meter {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: conic-gradient(from 0deg, #4CAF50 0deg, #FFEB3B 90deg, #FF9800 180deg, #F44336 270deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 1rem auto;
+        position: relative;
+    }
+    
+    .uv-inner {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    .circular-widget {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 1rem auto;
+        border: 2px solid rgba(255, 255, 255, 0.3);
     }
     
     .search-container {
@@ -134,7 +266,7 @@ st.markdown("""
         color: white;
         border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 20px;
-        padding: 0.75rem 2rem;
+        padding: 0.75rem 1.5rem;
         font-weight: 500;
         backdrop-filter: blur(10px);
     }
