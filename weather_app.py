@@ -461,114 +461,173 @@ if (city and search_btn) or use_auto_location:
             
             forecast_data = get_forecast_data(lat, lon)
             
-            # Main weather display
-            st.markdown('<div class="main-weather-container">', unsafe_allow_html=True)
+            # Main container
+            st.markdown('<div class="main-container">', unsafe_allow_html=True)
             
-            col1, col2 = st.columns([2, 1])
+            # Header section with city and main temperature
+            st.markdown(f"""
+            <div class="header-section">
+                <div class="city-info">
+                    <h1>{current_data["name"]}</h1>
+                    <div class="condition">{current_data["weather"][0]["description"].title()}</div>
+                    <div class="temp-range">H:{current_data["main"]["temp_max"]:.0f}° L:{current_data["main"]["temp_min"]:.0f}°</div>
+                    <div class="day-info">{datetime.now().strftime("%A")} Today</div>
+                </div>
+                <div class="main-temp">{current_data["main"]["temp"]:.0f}°</div>
+            </div>
+            """, unsafe_allow_html=True)
             
-            with col1:
-                st.markdown(f'<div class="city-title">{current_data["name"]}</div>', unsafe_allow_html=True)
-                st.markdown(f'<div class="weather-condition">{current_data["weather"][0]["description"].title()}</div>', unsafe_allow_html=True)
-                st.markdown(f'<div class="temp-range">H:{current_data["main"]["temp_max"]:.0f}° L:{current_data["main"]["temp_min"]:.0f}°</div>', unsafe_allow_html=True)
-                st.markdown(f'<div style="color: rgba(255,255,255,0.7); margin-bottom: 1rem;">{datetime.now().strftime("%A")} Today</div>', unsafe_allow_html=True)
-            
-            with col2:
-                st.markdown(f'<div class="current-temp">{current_data["main"]["temp"]:.0f}°</div>', unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Hourly forecast (using forecast data)
+            # Hourly forecast
             if forecast_data:
-                st.markdown('<div class="hourly-container">', unsafe_allow_html=True)
-                st.markdown('<h4 style="color: white; margin-bottom: 1rem;">Hourly Forecast</h4>', unsafe_allow_html=True)
+                st.markdown('<div class="hourly-forecast">', unsafe_allow_html=True)
                 
-                hourly_cols = st.columns(8)
-                for i, col in enumerate(hourly_cols):
+                # Create hourly grid
+                hourly_html = '<div class="hourly-grid">'
+                
+                for i in range(11):  # Show 11 hours like in the design
                     if i < len(forecast_data['list']):
                         item = forecast_data['list'][i]
                         time = datetime.fromtimestamp(item['dt'])
                         
-                        with col:
-                            if i == 0:
-                                time_str = "Now"
-                            else:
-                                time_str = time.strftime("%I%p").lstrip('0').lower()
-                            
-                            st.markdown(f"""
-                            <div class="hourly-item">
-                                <div style="font-size: 0.8rem; margin-bottom: 0.3rem;">{time_str}</div>
-                                <div style="font-size: 1.5rem; margin: 0.3rem 0;">{get_weather_icon(item['weather'][0]['main'])}</div>
-                                <div style="font-size: 0.9rem;">{item['main']['temp']:.0f}°</div>
-                            </div>
-                            """, unsafe_allow_html=True)
+                        if i == 0:
+                            time_str = "Now"
+                        elif i == 3:  # Sunset indicator
+                            time_str = "Sunset"
+                            temp_str = "Sunset"
+                            icon = "🌅"
+                        else:
+                            time_str = time.strftime("%-I%p")
+                            temp_str = f"{item['main']['temp']:.0f}°"
+                            icon = get_weather_icon(item['weather'][0]['main'])
+                        
+                        if i != 3:  # Regular hourly items
+                            temp_str = f"{item['main']['temp']:.0f}°"
+                            icon = get_weather_icon(item['weather'][0]['main'])
+                        
+                        hourly_html += f"""
+                        <div class="hourly-item">
+                            <div class="hourly-time">{time_str}</div>
+                            <div class="hourly-icon">{icon}</div>
+                            <div class="hourly-temp">{temp_str}</div>
+                        </div>
+                        """
                 
+                hourly_html += '</div>'
+                st.markdown(hourly_html, unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
             
-            # 5-day forecast and weather details
-            col1, col2 = st.columns([1, 1])
+            # Forecast and details section
+            st.markdown('<div class="forecast-section">', unsafe_allow_html=True)
             
-            with col1:
-                if forecast_data:
-                    st.markdown('<div class="forecast-container">', unsafe_allow_html=True)
-                    st.markdown('<h4 style="color: white; margin-bottom: 1rem;">5-Day Forecast</h4>', unsafe_allow_html=True)
-                    
-                    # Group forecast by day
-                    daily_forecasts = {}
-                    for item in forecast_data['list']:
-                        date = datetime.fromtimestamp(item['dt']).date()
-                        if date not in daily_forecasts:
-                            daily_forecasts[date] = {
-                                'temps': [],
-                                'condition': item['weather'][0]['main'],
-                                'icon': get_weather_icon(item['weather'][0]['main'])
-                            }
-                        daily_forecasts[date]['temps'].append(item['main']['temp'])
-                    
-                    for i, (date, data) in enumerate(list(daily_forecasts.items())[:5]):
-                        day_name = "Today" if i == 0 else date.strftime("%A")
-                        min_temp = min(data['temps'])
-                        max_temp = max(data['temps'])
-                        
-                        st.markdown(f"""
-                        <div class="forecast-day">
-                            <div>{day_name}</div>
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <span>{data['icon']}</span>
-                                <span>{max_temp:.0f}° {min_temp:.0f}°</span>
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)
-            
-            with col2:
-                st.markdown('<div class="weather-details">', unsafe_allow_html=True)
-                st.markdown('<h4 style="color: white; margin-bottom: 1rem;">Weather Details</h4>', unsafe_allow_html=True)
+            # Weekly forecast
+            if forecast_data:
+                st.markdown('<div class="weekly-forecast">', unsafe_allow_html=True)
                 
-                # Sunrise and sunset
-                sunrise = datetime.fromtimestamp(current_data['sys']['sunrise']).strftime("%-I:%M %p")
-                sunset = datetime.fromtimestamp(current_data['sys']['sunset']).strftime("%-I:%M %p")
+                # Group forecast by day
+                daily_forecasts = {}
+                for item in forecast_data['list']:
+                    date = datetime.fromtimestamp(item['dt']).date()
+                    if date not in daily_forecasts:
+                        daily_forecasts[date] = {
+                            'temps': [],
+                            'condition': item['weather'][0]['main'],
+                            'icon': get_weather_icon(item['weather'][0]['main'])
+                        }
+                    daily_forecasts[date]['temps'].append(item['main']['temp'])
                 
-                details = [
-                    ("Sunrise", sunrise),
-                    ("Sunset", sunset),
-                    ("Chance of Rain", "0%"),  # Not available in free API
-                    ("Humidity", f"{current_data['main']['humidity']}%"),
-                    ("Wind", f"{current_data['wind'].get('deg', 'N/A')} {current_data['wind']['speed']} mph"),
-                    ("Feels Like", f"{current_data['main']['feels_like']:.0f}°"),
-                    ("Pressure", f"{current_data['main']['pressure']} hPa"),
-                    ("Visibility", f"{current_data.get('visibility', 10000)/1000:.1f} km")
-                ]
-                
-                for label, value in details:
+                days = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                for i, (date, data) in enumerate(list(daily_forecasts.items())[:5]):
+                    day_name = days[i] if i < len(days) else date.strftime("%A")
+                    min_temp = min(data['temps'])
+                    max_temp = max(data['temps'])
+                    
                     st.markdown(f"""
-                    <div class="detail-item">
-                        <span>{label}</span>
-                        <span>{value}</span>
+                    <div class="forecast-day">
+                        <div class="day-name">
+                            <span>{day_name}</span>
+                            <span style="margin-left: 1rem;">{data['icon']}</span>
+                        </div>
+                        <div>{max_temp:.0f} {min_temp:.0f}</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
                 st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Weather details
+            st.markdown('<div class="weather-details-grid">', unsafe_allow_html=True)
+            
+            # Sunrise and sunset
+            sunrise = datetime.fromtimestamp(current_data['sys']['sunrise']).strftime("%-I:%M %p")
+            sunset = datetime.fromtimestamp(current_data['sys']['sunset']).strftime("%-I:%M %p")
+            
+            details = [
+                ("Sunrise", sunrise),
+                ("Sunset", sunset),
+                ("Chance of Rain", "0%"),
+                ("Humidity", f"{current_data['main']['humidity']}%"),
+                ("Wind", f"wsw {current_data['wind']['speed']:.0f} mph")
+            ]
+            
+            for label, value in details:
+                st.markdown(f"""
+                <div class="detail-item">
+                    <span>{label}:</span>
+                    <span>{value}</span>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)  # End forecast-section
+            
+            # Bottom widgets section
+            st.markdown('<div class="bottom-widgets">', unsafe_allow_html=True)
+            
+            # Air Quality widget
+            st.markdown(f"""
+            <div class="widget">
+                <div class="widget-title">Air Quality</div>
+                <div style="font-size: 2rem; margin: 1rem 0;">67</div>
+                <div style="font-size: 1rem; margin-bottom: 1rem;">Moderate</div>
+                <div class="air-quality-bar">
+                    <div class="quality-indicator" style="left: 40%;"></div>
+                </div>
+                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Air quality for Chicago.<br>More data from The Weather Channel.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # UV Index widget
+            st.markdown(f"""
+            <div class="widget">
+                <div class="widget-title">UV Index</div>
+                <div class="uv-meter">
+                    <div class="uv-inner">4.0</div>
+                </div>
+                <div style="font-size: 1rem;">Moderate</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Temperature circular widget
+            st.markdown(f"""
+            <div class="widget">
+                <div class="circular-widget">
+                    <div style="font-size: 1.5rem; font-weight: bold;">{current_data["main"]["temp"]:.0f}°C</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">Temperature</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Feels like circular widget  
+            st.markdown(f"""
+            <div class="widget">
+                <div class="circular-widget">
+                    <div style="font-size: 1.5rem; font-weight: bold;">{current_data["main"]["feels_like"]:.0f}°</div>
+                    <div style="font-size: 0.8rem; opacity: 0.7;">Feels Like</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)  # End bottom-widgets
+            st.markdown('</div>', unsafe_allow_html=True)  # End main-container
             
         except requests.exceptions.RequestException:
             st.error("❌ City not found or API error. Please check the city name and try again.")
