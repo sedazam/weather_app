@@ -145,13 +145,28 @@ st.markdown("""
     }
     
     .stTextInput > div {
-        margin-bottom: 0;
+        margin-bottom: 1rem;
     }
     
-    /* Make columns same height */
+    /* Make columns same height and center content */
     .element-container {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Center the search section */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    /* Align buttons in their columns */
+    .stButton {
+        display: flex;
+        justify-content: center;
     }
     
     /* Hide streamlit elements */
