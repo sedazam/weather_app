@@ -225,7 +225,7 @@ with col1:
 with col2:
     search_btn = st.button("🔍 Search")
 with col3:
-    location_btn = st.button("📍 Location")
+    location_btn = st.button("📍")
 
 # Auto-detect location if button clicked
 if location_btn:
