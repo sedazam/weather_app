@@ -107,16 +107,6 @@ st.markdown("""
         color: rgba(255, 255, 255, 0.9);
     }
     
-    .search-container {
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 25px;
-        padding: 1rem;
-        margin: 2rem auto;
-        backdrop-filter: blur(20px);
-        max-width: 500px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
     .stTextInput > div > div > input {
         background: rgba(255, 255, 255, 0.9);
         border: none;
@@ -125,6 +115,7 @@ st.markdown("""
         color: #333;
         font-size: 1rem;
         box-shadow: none;
+        height: 48px;
     }
     
     .stButton > button {
@@ -132,16 +123,35 @@ st.markdown("""
         color: white;
         border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 20px;
-        padding: 0.75rem 1.5rem;
+        padding: 0.75rem 1rem;
         font-weight: 500;
         backdrop-filter: blur(10px);
         transition: all 0.3s ease;
+        height: 48px;
+        width: 100%;
+        white-space: nowrap;
     }
     
     .stButton > button:hover {
         background: rgba(255, 255, 255, 0.3);
         transform: translateY(-2px);
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Align all input elements */
+    .stTextInput > div > div,
+    .stButton > button {
+        margin-bottom: 0;
+    }
+    
+    .stTextInput > div {
+        margin-bottom: 0;
+    }
+    
+    /* Make columns same height */
+    .element-container {
+        display: flex;
+        align-items: flex-end;
     }
     
     /* Hide streamlit elements */
@@ -208,16 +218,14 @@ def get_weather_by_coords(lat, lon):
     except:
         return None
 
-# Search container
-st.markdown('<div class="search-container">', unsafe_allow_html=True)
-col1, col2, col3 = st.columns([3, 1, 1])
+# Search inputs
+col1, col2, col3 = st.columns([4, 1.5, 1.5])
 with col1:
     city = st.text_input("Search for a city", placeholder="Enter city name", label_visibility="collapsed")
 with col2:
     search_btn = st.button("🔍 Search")
 with col3:
-    location_btn = st.button("📍 My Location")
-st.markdown('</div>', unsafe_allow_html=True)
+    location_btn = st.button("📍 Location")
 
 # Auto-detect location if button clicked
 if location_btn:
@@ -262,19 +270,8 @@ if (city and search_btn) or use_auto_location:
             
             forecast_data = get_forecast_data(lat, lon)
             
-            # Main weather card matching Chandigarh design
-            st.markdown(f"""
-            <div class="main-weather-card">
-                <div class="city-name">{current_data['name']}</div>
-                <div class="weather-icon-main">{get_weather_icon(current_data['weather'][0]['main'])}</div>
-                <div class="main-temperature">{current_data['main']['temp']:.0f}°</div>
-                <div class="temp-range">{current_data['main']['temp_min']:.0f}° - {current_data['main']['temp_max']:.0f}°</div>
-                <div class="weather-description">{current_data['weather'][0]['description'].title()}</div>
-                
-                <div class="forecast-row">
-            """, unsafe_allow_html=True)
-            
-            # 5-day forecast
+            # Main weather card with forecast
+            forecast_days_html = ""
             if forecast_data:
                 # Group forecast by day
                 daily_forecasts = {}
@@ -289,27 +286,30 @@ if (city and search_btn) or use_auto_location:
                     daily_forecasts[date]['temps'].append(item['main']['temp'])
                 
                 days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-                forecast_html = ""
                 
                 for i, (date, data) in enumerate(list(daily_forecasts.items())[:5]):
                     day_name = days[i] if i < len(days) else date.strftime("%a")
                     min_temp = min(data['temps'])
                     max_temp = max(data['temps'])
                     
-                    forecast_html += f"""
+                    forecast_days_html += f'''
                     <div class="forecast-day">
                         <div class="day-name">{day_name}</div>
                         <div class="forecast-icon">{data['icon']}</div>
                         <div class="forecast-temps">{max_temp:.0f}/{min_temp:.0f}</div>
-                    </div>
-                    """
-                
-                st.markdown(forecast_html, unsafe_allow_html=True)
+                    </div>'''
             
-            st.markdown("""
-                </div>
+            # Complete weather card HTML
+            st.markdown(f'''
+            <div class="main-weather-card">
+                <div class="city-name">{current_data['name']}</div>
+                <div class="weather-icon-main">{get_weather_icon(current_data['weather'][0]['main'])}</div>
+                <div class="main-temperature">{current_data['main']['temp']:.0f}°</div>
+                <div class="temp-range">{current_data['main']['temp_min']:.0f}° - {current_data['main']['temp_max']:.0f}°</div>
+                <div class="weather-description">{current_data['weather'][0]['description'].title()}</div>
+                <div class="forecast-row">{forecast_days_html}</div>
             </div>
-            """, unsafe_allow_html=True)
+            ''', unsafe_allow_html=True)
             
         except requests.exceptions.RequestException:
             st.error("❌ City not found or API error. Please check the city name and try again.")
