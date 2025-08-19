@@ -111,11 +111,13 @@ st.markdown("""
         background: rgba(255, 255, 255, 0.9);
         border: none;
         border-radius: 20px;
-        padding: 0.75rem 1rem;
+        padding: 0.75rem 1.5rem;
         color: #333;
         font-size: 1rem;
         box-shadow: none;
         height: 48px;
+        width: 100%;
+        text-align: center;
     }
     
     .stButton > button {
@@ -130,6 +132,7 @@ st.markdown("""
         height: 48px;
         width: 100%;
         white-space: nowrap;
+        margin-top: 0.5rem;
     }
     
     .stButton > button:hover {
@@ -159,7 +162,7 @@ st.markdown("""
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
-        max-width: 500px;
+        max-width: 600px;
         margin: 0 auto;
     }
     
