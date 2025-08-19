@@ -219,12 +219,13 @@ def get_weather_by_coords(lat, lon):
         return None
 
 # Search inputs
-col1, col2, col3 = st.columns([4, 1.5, 1.5])
+city = st.text_input("Search for a city", placeholder="Enter city name", label_visibility="collapsed")
+
+# Buttons below search bar
+col1, col2 = st.columns([1, 1])
 with col1:
-    city = st.text_input("Search for a city", placeholder="Enter city name", label_visibility="collapsed")
-with col2:
     search_btn = st.button("🔍 Search")
-with col3:
+with col2:
     location_btn = st.button("📍")
 
 # Auto-detect location if button clicked
