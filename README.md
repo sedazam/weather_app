@@ -121,11 +121,13 @@ weather_app/
 ## 🚀 Running the App
 
 ### Option 1: Modular Version (Recommended)
+
 ```bash
 streamlit run app.py
 ```
 
 ### Option 2: Original Version
+
 ```bash
 streamlit run weather_app.py
 ```
