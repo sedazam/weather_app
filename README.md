@@ -101,12 +101,33 @@ The app provides:
 
 ```
 weather_app/
-├── weather_app.py          # Main application file
-├── requirements.txt        # Python dependencies
-├── .env.example           # Environment variables template
-├── .env                   # Your API keys (not in git)
-├── .gitignore            # Git ignore rules
-└── README.md             # Project documentation
+├── app.py                  # Main application file (modular)
+├── weather_app.py          # Original monolithic version
+├── utils.py               # Weather API functions and data processing
+├── templates.py           # HTML template engine
+├── styles.css             # External CSS styles
+├── templates/             # HTML template files
+│   ├── weather_card.html  # Main weather card template
+│   ├── forecast_day.html  # Forecast day template
+│   └── welcome.html       # Welcome screen template
+├── requirements.txt       # Python dependencies
+├── .env.example          # Environment variables template
+├── .env                  # Your API keys (not in git)
+├── .gitignore           # Git ignore rules
+├── STRUCTURE.md         # Modular architecture documentation
+└── README.md            # Project documentation
+```
+
+## 🚀 Running the App
+
+### Option 1: Modular Version (Recommended)
+```bash
+streamlit run app.py
+```
+
+### Option 2: Original Version
+```bash
+streamlit run weather_app.py
 ```
 
 ## 🔧 Technical Details
