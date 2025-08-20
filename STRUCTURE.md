@@ -23,12 +23,14 @@ weather_app/
 ## 🔄 Migration Guide
 
 ### Old Structure (Monolithic)
+
 - All code in `weather_app.py` (348 lines)
 - CSS embedded in Python strings
 - HTML templates as f-strings
 - All functions in one file
 
 ### New Structure (Modular)
+
 - **`app.py`**: Main application logic (clean & focused)
 - **`utils.py`**: Weather API functions and data processing
 - **`templates.py`**: HTML template engine and rendering
@@ -38,11 +40,13 @@ weather_app/
 ## 🚀 Running the Modular Version
 
 ### Option 1: New Modular App
+
 ```bash
 streamlit run app.py
 ```
 
 ### Option 2: Original App (still works)
+
 ```bash
 streamlit run weather_app.py
 ```
@@ -50,24 +54,28 @@ streamlit run weather_app.py
 ## ✨ Benefits of Modular Structure
 
 ### 🎯 **Separation of Concerns**
+
 - **Python Logic**: `app.py` & `utils.py`
 - **Styling**: `styles.css`
 - **Templates**: `templates/` directory
 - **Configuration**: `.env` files
 
 ### 🔧 **Maintainability**
+
 - Easier to debug specific components
 - Simpler to add new features
 - Better code organization
 - Cleaner imports
 
 ### 👥 **Team Development**
+
 - Frontend developers can work on CSS/HTML
 - Backend developers focus on Python logic
 - Better version control (smaller diffs)
 - Easier code reviews
 
 ### 🧪 **Testing**
+
 - Individual functions can be unit tested
 - Separate template testing
 - CSS can be validated independently
@@ -76,6 +84,7 @@ streamlit run weather_app.py
 ## 📋 File Responsibilities
 
 ### `app.py` (Main Application)
+
 - Streamlit page configuration
 - User interface layout
 - Button click handling
@@ -83,6 +92,7 @@ streamlit run weather_app.py
 - Error handling and display
 
 ### `utils.py` (Backend Logic)
+
 - Weather API communication
 - Data processing and formatting
 - Location detection
@@ -90,18 +100,21 @@ streamlit run weather_app.py
 - Forecast data parsing
 
 ### `templates.py` (Template Engine)
+
 - HTML template loading
 - CSS file loading
 - Template rendering with data
 - String formatting and substitution
 
 ### `styles.css` (Styling)
+
 - All CSS styles
 - Responsive design rules
 - Color schemes and themes
 - Animation and transitions
 
 ### `templates/*.html` (UI Components)
+
 - Reusable HTML components
 - Template placeholders
 - Semantic HTML structure
@@ -110,17 +123,21 @@ streamlit run weather_app.py
 ## 🎨 Customization Made Easy
 
 ### Change Colors/Theme
+
 Edit `styles.css` - modify gradient, glassmorphism effects, etc.
 
 ### Modify Layout
+
 Edit templates in `templates/` directory - restructure HTML as needed
 
 ### Add Features
+
 - New functions in `utils.py`
 - New templates for components
 - Update `app.py` for UI integration
 
 ### Update Styling
+
 - CSS changes in `styles.css`
 - No need to touch Python code
 - Live reload with Streamlit
@@ -134,13 +151,13 @@ Edit templates in `templates/` directory - restructure HTML as needed
 
 ## 📊 Code Metrics Comparison
 
-| Metric | Original | Modular | Improvement |
-|--------|----------|---------|-------------|
-| Lines per file | 348 | ~100 avg | 3.5x smaller |
-| Separation | None | 4 modules | Complete |
-| CSS Lines | 140 | 140 | External file |
-| HTML Lines | ~50 | ~50 | Template files |
-| Maintainability | Low | High | Much better |
+| Metric          | Original | Modular   | Improvement    |
+| --------------- | -------- | --------- | -------------- |
+| Lines per file  | 348      | ~100 avg  | 3.5x smaller   |
+| Separation      | None     | 4 modules | Complete       |
+| CSS Lines       | 140      | 140       | External file  |
+| HTML Lines      | ~50      | ~50       | Template files |
+| Maintainability | Low      | High      | Much better    |
 
 ## 🎯 Best Practices Implemented
 
